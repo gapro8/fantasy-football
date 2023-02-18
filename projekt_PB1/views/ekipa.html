@@ -1,0 +1,8 @@
+% rebase('base.html')
+
+<h1>{{ime_ekipe}}</h1>
+<ol>
+  %for (igralec, datum_rojstva, ekipa_dolgo, ekipa_kratko, polozaj_x, polozaj_y) in igralci:
+  <li>{{igralec}}, {{datum_rojstva}}, {{ekipa_dolgo}}, {{ekipa_kratko}}, {{polozaj_x}}, {{polozaj_y}}</li>
+  %end
+</ol>

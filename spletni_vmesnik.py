@@ -28,7 +28,6 @@ def pregled_baze():
     return bottle.template("pregled_tabel.html", Country=Country, League=League, Match=Match, Player=Player, Player_Attributes=Player_Attributes, Team=Team, Team_Attributes=Team_Attributes)
 
 
-
 baza = "baza_nogomet.db"
 con = sqlite3.connect(baza)
 cur = con.cursor()
