@@ -1,7 +1,6 @@
 import bottle
 import model
 from bottle import *
-import sqlite3
 
 
 
@@ -10,8 +9,6 @@ import sqlite3
 def index():
     moji_igralci, ime_ekipe = model.moji_igralci(), model.ime_moje_ekipe()
     return template("moja_ekipa.html", moji_igralci=moji_igralci, ime_ekipe=ime_ekipe)
-
-
 
 @get('/pregled_baze')
 def pregled_baze():
@@ -46,18 +43,21 @@ def load_quick_match():
 
 @post('/simuliraj_tekmo')
 def simuliraj_tekmo():
+    # grdo ampak deluje
+    max_stevilo_igralcev_izmed_vseh_ekip = 30
     seznam_home_igralcev = []
     seznam_away_igralcev = []
-    # res = f_izracunaj_stohasticen_rezultat(seznam_home_igralcev, seznam_away_igralcev)
-    return '2 : 1'
+    for i in range(max_stevilo_igralcev_izmed_vseh_ekip):
+        id_home = request.forms.get(str(i))
+        if id_home != None: seznam_home_igralcev.append(id_home)
+        id_away = request.forms.get(str(i+max_stevilo_igralcev_izmed_vseh_ekip))
+        if id_away != None: seznam_away_igralcev.append(id_away)
 
+    if len(seznam_home_igralcev) != 11: return "V domači ekipi ni 11 igralcev"
+    if len(seznam_away_igralcev) != 11: return "V gostojoči ekipi ni 11 igralcev"
 
-
-# @get('/uredi_ekipo')
-# def uredi_ekipo():
-#     cur.execute("SELECT * FROM Player;")
-#     Player = cur.fetchall()
-#     return template("igralci.html", Player = Player)
+    res = model.f_izracunaj_stohasticen_rezultat(seznam_home_igralcev, seznam_away_igralcev)
+    return res
 
 
 
@@ -75,7 +75,6 @@ def do_lestvica():
     sezona = request.forms.get('sezona')
     krog = int(request.forms.get('krog'))
     lest_sortirana = model.naredi_lestvico(league_id, sezona, krog)
-    print(lest_sortirana)
     return template("liga.html", lestvica=lest_sortirana)
 
 
@@ -98,8 +97,8 @@ def sestavi_ekipo():
     branilec = request.forms.get('branilec')
     vezist = request.forms.get('vezist')
     napadalec = request.forms.get('napadalec')
-    sez_igralcev, f_cena = model.seznam_igralcev_za_prikaz(ime_igralca, vratar, branilec, vezist, napadalec)
-    return template("izbor_igralcev.html", moji_igralci=[], igralci = sez_igralcev, poz=model.POZICIJE, f_cena=f_cena, url=bottle.url)
+    sez_igralcev = model.seznam_igralcev_za_prikaz(ime_igralca, vratar, branilec, vezist, napadalec)
+    return template("izbor_igralcev.html", moji_igralci=[], igralci = sez_igralcev, poz=model.POZICIJE, f_cena=model.f_cena, url=bottle.url)
 
 @post('/kupi/<igralec_id>')
 def kupi(igralec_id):
@@ -112,22 +111,6 @@ def prodaj(igralec_id):
     model.prodaj(igralec_id)
     return redirect(url('/naredi_ekipo'))
 
-# @get('/lestvica/<league_id>')
-# def lestvica(league_id):
-#     s = f"SELECT Team.team_long_name, Team.team_short_name FROM Team JOIN League ON Team.league_id = League.id where League.id = {league_id}"
-#     res = cur.execute(s)
-#     teams = res.fetchall()
-#     print(teams)
-#     return template("lestvica.html", ekipe=teams)
-
-
-# @get('/lestvica/<league_id>')
-# def lestvica(league_id):
-#     s = f"SELECT Team.team_long_name, Team.team_short_name FROM Team JOIN League ON Team.league_id = League.id where League.id = {league_id}"
-#     res = cur.execute(s)
-#     teams = res.fetchall()
-#     print(teams)
-#     return template("lestvica.html", ekipe=teams)
 
 
 #da izpiše vse igralce
@@ -135,6 +118,33 @@ def prodaj(igralec_id):
 def ekipa(ime_ekipe):
     ime_ekipe, igralci = model.ekipa_model(ime_ekipe)
     return template("ekipa.html", ime_ekipe=ime_ekipe, igralci=igralci)
+
+
+
+
+# @get('/lestvica/<league_id>')
+# def lestvica(league_id):
+#     s = f"SELECT Team.team_long_name, Team.team_short_name FROM Team JOIN League ON Team.league_id = League.id where League.id = {league_id}"
+#     res = cur.execute(s)
+#     teams = res.fetchall()
+#     print(teams)
+#     return template("lestvica.html", ekipe=teams)
+
+
+# @get('/lestvica/<league_id>')
+# def lestvica(league_id):
+#     s = f"SELECT Team.team_long_name, Team.team_short_name FROM Team JOIN League ON Team.league_id = League.id where League.id = {league_id}"
+#     res = cur.execute(s)
+#     teams = res.fetchall()
+#     print(teams)
+#     return template("lestvica.html", ekipe=teams)
+
+# @get('/uredi_ekipo')
+# def uredi_ekipo():
+#     cur.execute("SELECT * FROM Player;")
+#     Player = cur.fetchall()
+#     return template("igralci.html", Player = Player)
+
 
 # @get('/igralec/<ime_igralca>')
 # def igralec(ime_igralca):

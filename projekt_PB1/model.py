@@ -1,11 +1,12 @@
+import random
 import sqlite3
+
 
 baza = "baza_nogomet.db"
 con = sqlite3.connect(baza)
 cur = con.cursor()
 
 POZICIJE = {1:"GK", 2:"DEF", 3:"DEF", 4:"DEF", 5:"DEF", 6:"MID", 7:"MID", 8:"MID", 9:"ATK", 10:"ATK", 11:"ATK"}
-
 
 
 def pregled():
@@ -26,8 +27,6 @@ def pregled():
     cur.execute("SELECT * FROM Team_Attributes limit 10;")
     Team_Attributes = cur.fetchall()
     return Country, League, Match, Player, Player_Attributes, Team, Team_Attributes
-
-
 
 def moji_igralci():
     # TODO namesto * napisem ustrezne stolpce
@@ -57,48 +56,30 @@ def naredi_lestvico(league_id, sezona, krog):
     # reverse=True poskrbi da gre od najvecjega stevila tock do najmanjsega
     return lest_sortirana
 
-#Spodnjo funkcijo uporabimo v def do_lestvica() zgoraj, da izracunamo stevilo tock in gol razliko. Po temu potem sortiramo lestvico. Najprej tocke potem gol razlika.
+# Spodnjo funkcijo uporabimo v def do_lestvica() zgoraj, da izracunamo stevilo tock in gol razliko. Po temu potem sortiramo lestvico. Najprej tocke potem gol razlika.
 def prvi_na_vrsti(elem):
     return (elem[1] * 3 + elem[2], elem[4] - elem[5])  #uporabimo tuple
 
 def izracunaj_lestvico(league_id, season, krog=100):
-    tekme = vse_tekme_v_sezoni(league_id, season, krog)
-    # {ekipa_id: (Z, R, P, dani_goli, prejeti_goli)}
-    sl = {}
-
+    tekme = vse_tekme_v_sezoni(league_id, season, krog) 
+    sl = {} # {ekipa_id: (Z, R, P, dani_goli, prejeti_goli)}
     for stage, date, home_team_id, away_team_id, home_team_goals, away_team_goals in tekme:
         if home_team_id not in sl:
-            if home_team_goals > away_team_goals:
+            if home_team_goals > away_team_goals: 
                 sl[home_team_id] = (1, 0, 0, home_team_goals, away_team_goals)
             elif home_team_goals < away_team_goals:
                 sl[home_team_id] = (0, 0, 1, home_team_goals, away_team_goals)
             elif home_team_goals == away_team_goals:
                 sl[home_team_id] = (0, 1, 0, home_team_goals, away_team_goals)
         else:
-            if home_team_goals > away_team_goals:
-                Z, R, P, dani_goli, prejeti_goli = sl[home_team_id]
-                Z += 1
-                R += 0
-                P += 0
-                dani_goli += home_team_goals
-                prejeti_goli += away_team_goals
-                sl[home_team_id] = (Z, R, P, dani_goli, prejeti_goli)
-            elif home_team_goals < away_team_goals:
-                Z, R, P, dani_goli, prejeti_goli = sl[home_team_id]
-                Z += 0
-                R += 0
-                P += 1
-                dani_goli += home_team_goals
-                prejeti_goli += away_team_goals
-                sl[home_team_id] = (Z, R, P, dani_goli, prejeti_goli)
-            elif home_team_goals == away_team_goals:
-                Z, R, P, dani_goli, prejeti_goli = sl[home_team_id]
-                Z += 0
-                R += 1
-                P += 0
-                dani_goli += home_team_goals
-                prejeti_goli += away_team_goals
-                sl[home_team_id] = (Z, R, P, dani_goli, prejeti_goli)
+            Z, R, P, dani_goli, prejeti_goli = sl[home_team_id]
+            dani_goli += home_team_goals
+            prejeti_goli += away_team_goals
+            if home_team_goals > away_team_goals: Z += 1
+            elif home_team_goals < away_team_goals: P += 1
+            elif home_team_goals == away_team_goals: R += 1
+            sl[home_team_id] = (Z, R, P, dani_goli, prejeti_goli)
+
         if away_team_id not in sl:
             if away_team_goals > home_team_goals:
                 sl[away_team_id] = (1, 0, 0, away_team_goals, home_team_goals)
@@ -107,31 +88,13 @@ def izracunaj_lestvico(league_id, season, krog=100):
             elif away_team_goals == home_team_goals:
                 sl[away_team_id] = (0, 1, 0, away_team_goals, home_team_goals)
         else:
-            if away_team_goals > home_team_goals:
-                Z, R, P, dani_goli, prejeti_goli = sl[away_team_id]
-                Z += 1
-                R += 0
-                P += 0
-                dani_goli += away_team_goals
-                prejeti_goli += home_team_goals
-                sl[away_team_id] = (Z, R, P, dani_goli, prejeti_goli)
-            elif away_team_goals < home_team_goals:
-                Z, R, P, dani_goli, prejeti_goli = sl[away_team_id]
-                Z += 0
-                R += 0
-                P += 1
-                dani_goli += away_team_goals
-                prejeti_goli += home_team_goals
-                sl[away_team_id] = (Z, R, P, dani_goli, prejeti_goli)
-            elif away_team_goals == home_team_goals:
-                Z, R, P, dani_goli, prejeti_goli = sl[away_team_id]
-                Z += 0
-                R += 1
-                P += 0
-                dani_goli += away_team_goals
-                prejeti_goli += home_team_goals
-                sl[away_team_id] = (Z, R, P, dani_goli, prejeti_goli)        
-    
+            Z, R, P, dani_goli, prejeti_goli = sl[away_team_id]
+            dani_goli += away_team_goals
+            prejeti_goli += home_team_goals
+            if away_team_goals > home_team_goals: Z += 1
+            elif away_team_goals < home_team_goals: P += 1
+            elif away_team_goals == home_team_goals: R += 1    
+            sl[away_team_id] = (Z, R, P, dani_goli, prejeti_goli)        
     return sl
 
 
@@ -156,17 +119,11 @@ def igralci_v_ekipi(team):
     ORDER BY Player_Attributes.overall_rating DESC;"""
     cur.execute(s) 
     res = cur.fetchall()
-    print(res)
     return res
-
-
-
-
 
 def ekipa_model(ime_ekipe):
     s = f"""SELECT Player.player_name, Player.birthday, Team.team_long_name, Team.team_short_name, Player.player_coordinate_x, Player.player_coordinate_y FROM Player 
             JOIN Team ON Player.team_id = Team.team_api_id WHERE Team.team_long_name = '{ime_ekipe}';"""
-    print(s)
     res = cur.execute(s) 
     igralci = res.fetchall()
     return ime_ekipe, igralci
@@ -193,13 +150,8 @@ def seznam_igralcev_za_prikaz(ime_igralca, vratar, branilec, vezist, napadalec):
     ORDER BY Player_Attributes.overall_rating DESC;"""
     res = cur.execute(s) 
     sez_igralcev = res.fetchall()
-    def f_cena(r):
-        r = int(r) if r != None else 1
-        if r > 70:
-            return r * 100000
-        else:
-            return r * 1000
-    return sez_igralcev, f_cena
+    return sez_igralcev
+
 
 def f_cena(r):
     r = int(r) if r != None else 1
@@ -209,12 +161,30 @@ def f_cena(r):
         return r * 1000
 
 
+def f_izracunaj_stohasticen_rezultat(seznam_home_igralcev, seznam_away_igralcev):
+    s_home = f"""
+        SELECT overall_rating from Player_Attributes 
+        WHERE player_api_id in {tuple(seznam_home_igralcev)}
+    """
+    cur.execute(s_home)
+    vsi = cur.fetchall()
+    home_rating = sum(x[0] for x in vsi)
+    s_away = f"""
+        SELECT overall_rating from Player_Attributes 
+        WHERE player_api_id in {tuple(seznam_away_igralcev)}
+    """
+    cur.execute(s_away)
+    vsi = cur.fetchall()
+    away_rating = sum(x[0] for x in vsi)
+    print(home_rating, away_rating)
+    smiselni_rezultati = ["0 : 0", "0 : 1", "0 : 2", "0 : 3", "1 : 0", "1 : 1", "1 : 2", "1 : 3", "2 : 0", "2 : 1", "2 : 2", "2 : 3", "3 : 0", "3 : 1", "3 : 2", "3 : 3"] 
+    return random.choice(smiselni_rezultati) + f" home rating:{home_rating}, away rating:{away_rating}"
+
 def kupi(igralec_id):
     cur.execute(f"SELECT player_api_id, player_name, player_fifa_api_id, birthday, team_id, player_coordinate_x, player_coordinate_y FROM Player WHERE player_api_id = {igralec_id};")
     player_api_id, player_name, player_fifa_api_id, birthday, team_id, player_coordinate_x, player_coordinate_y = tuple(cur.fetchone())
     # TODO preveri ce je ta igralec ze med kupljenimi
     # TODO denar se mora odsteti od budgeta
-    print(player_api_id, player_name, player_fifa_api_id, birthday, team_id, player_coordinate_x, player_coordinate_y)
     s = f"""
         INSERT INTO Player
         (player_api_id, player_name, player_fifa_api_id, birthday, team_id, player_coordinate_x, player_coordinate_y) 
@@ -229,5 +199,3 @@ def prodaj(igralec_id):
     s = f"DELETE FROM Player WHERE player_api_id = {igralec_id};" 
     cur.execute(s)
     con.commit()
-
-
